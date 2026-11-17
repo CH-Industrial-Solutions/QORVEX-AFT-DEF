@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>QORVEX Sequence</title>
 <script>try{document.documentElement.dataset.theme=localStorage.getItem('qorvex-tema')==='claro'?'claro':'oscuro';}catch(e){document.documentElement.dataset.theme='oscuro';}</script>
-<link rel="stylesheet" href="css/theme.css?v=2026-11-09-0040">
-<link rel="stylesheet" href="css/fondo.css?v=2026-11-09-0040">
-<link rel="stylesheet" href="css/marca.css?v=2026-11-09-0040">
-<link rel="stylesheet" href="css/tema-claro.css?v=2026-11-09-0040">
+<link rel="stylesheet" href="css/theme.css?v=2026-11-17-1400">
+<link rel="stylesheet" href="css/fondo.css?v=2026-11-17-1400">
+<link rel="stylesheet" href="css/marca.css?v=2026-11-17-1400">
+<link rel="stylesheet" href="css/tema-claro.css?v=2026-11-17-1400">
 </head>
 <body>
 
@@ -33,27 +33,64 @@
     </section>
 
     <section id="view-login" class="view paso" hidden>
-      <h2 id="login-title">Inicio de sesión</h2>
-      <p class="ayuda" id="login-hint"></p>
-      <form id="login-form" autocomplete="on">
-        <label class="etiqueta" for="user-name">No. de empleado</label>
-        <input id="user-name" class="campo" autocomplete="username" required>
-        <div id="campo-nombre" hidden>
-          <label class="etiqueta" for="user-nombre">Nombre</label>
-          <input id="user-nombre" class="campo" autocomplete="name">
-        </div>
-        <label class="etiqueta" for="user-pass">Contraseña (mín. 4)</label>
-        <input id="user-pass" type="password" class="campo" autocomplete="current-password" required>
-        <div id="campo-confirmar" hidden>
-          <label class="etiqueta" for="user-pass2">Confirmar contraseña</label>
-          <input id="user-pass2" type="password" class="campo" autocomplete="new-password">
-        </div>
-        <button type="submit" class="btn-primario" id="btn-login">Entrar</button>
-      </form>
+      <div class="tabs-acceso" role="tablist">
+        <button type="button" class="tab-acceso activo" id="tab-login" role="tab" aria-selected="true">Iniciar sesión</button>
+        <button type="button" class="tab-acceso" id="tab-registro" role="tab" aria-selected="false">Registrarse</button>
+      </div>
+
+      <div id="panel-login">
+        <h2>Bienvenido</h2>
+        <p class="ayuda">Entra con tu No. de empleado y contraseña.</p>
+        <form id="login-form" autocomplete="on">
+          <label class="etiqueta" for="user-name">No. de empleado</label>
+          <input id="user-name" class="campo" autocomplete="username" placeholder="No. de empleado" required>
+          <label class="etiqueta" for="user-pass">Contraseña</label>
+          <input id="user-pass" type="password" class="campo" autocomplete="current-password" placeholder="Contraseña" required>
+          <button type="submit" class="btn-primario" id="btn-login">Ingresar</button>
+        </form>
+        <p class="ayuda ayuda-pie">¿Olvidaste tu contraseña? Pide a un administrador que te asigne una nueva.</p>
+      </div>
+
+      <div id="panel-registro" hidden>
+        <h2>Crear cuenta</h2>
+        <p class="ayuda">Tu cuenta quedará pendiente hasta que un administrador la apruebe y te asigne rol. El registro crea una cuenta de <b>capturista</b>.</p>
+        <form id="register-form" autocomplete="on">
+          <label class="etiqueta" for="reg-empleado">No. de empleado</label>
+          <input id="reg-empleado" class="campo" autocomplete="username" placeholder="Será tu usuario" required>
+          <label class="etiqueta" for="reg-nombre">Nombre completo</label>
+          <input id="reg-nombre" class="campo" autocomplete="name" required>
+          <div class="fila-dos">
+            <div>
+              <label class="etiqueta" for="reg-pass">Contraseña</label>
+              <input id="reg-pass" type="password" class="campo" autocomplete="new-password" placeholder="Mín. 4" required>
+            </div>
+            <div>
+              <label class="etiqueta" for="reg-pass2">Confirmar</label>
+              <input id="reg-pass2" type="password" class="campo" autocomplete="new-password" required>
+            </div>
+          </div>
+          <label class="check-row"><input type="checkbox" id="reg-acepto"><span>Acepto el <button type="button" class="enlace-legal" data-legal>aviso legal y los términos de uso</button>.</span></label>
+          <button type="submit" class="btn-primario" id="btn-registrar">Registrarme</button>
+        </form>
+      </div>
+
       <span id="login-status" class="status"></span>
+      <div class="pie-card">
+        <div class="pie-card-enlaces"><button type="button" class="enlace-legal" data-legal>Aviso legal</button> · <button type="button" class="enlace-legal" data-legal>Términos</button> · <button type="button" class="enlace-legal" data-legal>Privacidad</button></div>
+        <div>© 2026 CH Industrial Solutions · Ing. Carlos Alberto Hernández Hernández · Todos los derechos reservados</div>
+      </div>
+    </section>
+
+    <section id="view-terminos" class="view paso" hidden>
+      <h2>Términos y privacidad</h2>
+      <p class="ayuda">Antes de usar QORVEX Sequence, lee y acepta los términos de uso, los derechos de autor y el aviso de privacidad.</p>
+      <div id="terminos-contenido" class="legal-texto"></div>
+      <label class="check-row"><input type="checkbox" id="acepto-terminos"><span>He leído y acepto los términos y el aviso de privacidad.</span></label>
+      <button type="button" class="btn-primario" id="btn-acepto" disabled>Aceptar y continuar</button>
+      <button type="button" class="btn-secundario" id="btn-no-acepto">Cancelar</button>
     </section>
   </div>
-  <footer class="pie"><span id="reloj"></span><span>QORVEX · Desarrollado por <b>CH Industrial Solutions</b></span></footer>
+  <footer class="pie"><span id="reloj"></span><span>QORVEX · Desarrollado por <b>CH Industrial Solutions</b> · <button type="button" class="enlace-legal" data-legal>Términos y privacidad</button></span></footer>
 </div>
 
 <!-- ===== Aplicación ===== -->
@@ -289,7 +326,7 @@
         <div class="grid-routers" id="router-chips"></div>
         <p class="muted" id="router-selected"></p>
       </div>
-      <div class="card">
+      <div class="card" data-solo-admin>
         <h3>Carpetas</h3>
         <table class="tabla-carpetas">
           <tbody>
@@ -302,7 +339,7 @@
         <span id="cfg-status" class="status"></span>
       </div>
 
-      <div class="card">
+      <div class="card" data-solo-admin>
         <h3>Formato de hoja</h3>
         <p class="muted">Texto del pie de página y folio asignado por la empresa. En el texto, <b>{mes}</b> se reemplaza por el mes y año de impresión (por ejemplo, November 2026).</p>
         <div class="add-row">
@@ -314,7 +351,7 @@
         <span id="fmt-status" class="status"></span>
       </div>
 
-      <div class="card">
+      <div class="card" data-solo-admin>
         <h3>Respaldos</h3>
         <p class="muted">Se crea una copia automática de usuarios, configuración y registro cada vez que cambias algo aquí o en Inicio. También puedes respaldar ahora.</p>
         <button class="secondary" id="btn-respaldar">Respaldar ahora</button>
@@ -322,17 +359,29 @@
       </div>
 
       <div class="card">
+        <h3>Legal y privacidad</h3>
+        <p class="muted">Términos de uso, derechos de autor, licencias de terceros y aviso de privacidad. Versión de los términos: <b id="legal-version"></b>.</p>
+        <p class="muted" id="legal-acepto"></p>
+        <button class="secondary" id="btn-ver-legal">Ver términos y privacidad</button>
+      </div>
+
+      <div class="card">
         <h3>Usuarios</h3>
         <p class="muted" id="usr-sesion"></p>
-        <div class="table-wrap"><table><thead><tr><th>No. de empleado</th><th>Nombre</th><th>Rol</th></tr></thead><tbody id="usuarios-rows"></tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th>No. de empleado</th><th>Nombre</th><th>Rol</th><th>Estado</th></tr></thead><tbody id="usuarios-rows"></tbody></table></div>
         <div id="admin-usuarios" hidden>
+          <div id="pendientes-bloque" hidden>
+            <h4>Solicitudes pendientes</h4>
+            <div class="table-wrap"><table><thead><tr><th>No. de empleado</th><th>Nombre</th><th>Asignar rol</th><th></th></tr></thead><tbody id="pendientes-rows"></tbody></table></div>
+            <span id="pend-status" class="status"></span>
+          </div>
           <h4>Dar de alta un usuario</h4>
           <div class="form-grid">
             <div><label class="etiqueta" for="alta-empleado">No. de empleado</label><input id="alta-empleado" class="campo"></div>
             <div><label class="etiqueta" for="alta-nombre">Nombre</label><input id="alta-nombre" class="campo"></div>
             <div><label class="etiqueta" for="alta-pass">Contraseña (mín. 4)</label><input id="alta-pass" type="password" class="campo"></div>
             <div><label class="etiqueta" for="alta-rol">Rol</label>
-              <select id="alta-rol"><option value="operador">Operador</option><option value="admin">Administrador</option></select></div>
+              <select id="alta-rol"><option value="capturista">Capturista</option><option value="admin">Administrador</option></select></div>
           </div>
           <button id="btn-alta">Dar de alta</button>
 
@@ -356,9 +405,15 @@
   </footer>
 </div>
 
-<script src="js/vendor/xlsx.full.min.js?v=2026-11-09-0040"></script>
-<script src="js/vendor/jspdf.umd.min.js?v=2026-11-09-0040"></script>
-<script src="js/vendor/jspdf.plugin.autotable.min.js?v=2026-11-09-0040"></script>
-<script src="js/qorvex.js?v=2026-11-09-0040"></script>
+<!-- ===== Aviso: Términos y privacidad ===== -->
+<dialog id="dlg-legal" class="dlg-legal" aria-labelledby="dlg-legal-tit">
+  <div class="dlg-cab"><h2 id="dlg-legal-tit">Términos y privacidad</h2><button type="button" class="secondary" id="btn-cerrar-legal">Cerrar</button></div>
+  <div id="legal-contenido" class="legal-texto"></div>
+</dialog>
+
+<script src="js/vendor/xlsx.full.min.js?v=2026-11-17-1400"></script>
+<script src="js/vendor/jspdf.umd.min.js?v=2026-11-17-1400"></script>
+<script src="js/vendor/jspdf.plugin.autotable.min.js?v=2026-11-17-1400"></script>
+<script src="js/qorvex.js?v=2026-11-17-1400"></script>
 </body>
 </html>

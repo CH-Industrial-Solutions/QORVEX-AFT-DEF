@@ -306,3 +306,29 @@ main { max-width: 1400px; padding: 16px 18px 90px; }
 .cruce-bajo #load-result table { font-size: 13px; width: 100%; max-width: 900px; }
 .cruce-bajo #load-result th { width: 240px; padding: 8px 12px 8px 0; vertical-align: top; text-align: left; }
 .cruce-bajo #load-result td { padding: 8px 0; vertical-align: top; word-break: break-word; }
+
+/* ---- Términos y privacidad ---- */
+.enlace-legal { background: none; border: 0; padding: 0; margin: 0; min-height: 0; color: inherit; font: inherit; font-weight: 600; text-decoration: underline; cursor: pointer; }
+.legal-texto { max-height: 300px; overflow: auto; margin: 6px 0 4px; padding: 2px 10px 2px 0; font-size: 13px; line-height: 1.5; color: var(--text); }
+.legal-texto h4 { margin: 14px 0 4px; font-size: 14px; color: var(--cyan-2); }
+.legal-texto p { margin: 0 0 6px; }
+.acceso-card .legal-texto { color: #e6f2ff; }
+.check-row { display: flex; gap: 10px; align-items: flex-start; margin: 14px 0 10px; font-size: 13px; line-height: 1.4; color: var(--text); cursor: pointer; }
+.check-row input { flex: none; width: 18px; height: 18px; margin: 2px 0 0; }
+button:disabled { opacity: .45; cursor: not-allowed; }
+dialog.dlg-legal { width: min(680px, calc(100vw - 32px)); max-height: 86vh; padding: 20px 22px; background: var(--panel); color: var(--text); border: 1px solid var(--cyan); border-radius: 14px; box-shadow: 0 20px 60px rgba(0, 0, 0, .5); }
+dialog.dlg-legal::backdrop { background: rgba(0, 0, 0, .6); }
+dialog.dlg-legal .legal-texto { max-height: 62vh; }
+.dlg-cab { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; }
+.dlg-cab h2 { margin: 0; font-size: 18px; }
+
+/* ---- Acceso: pestañas, registro y pie de la tarjeta ---- */
+.tabs-acceso { display: flex; gap: 4px; padding: 4px; margin: 0 0 18px; border: 1px solid #1d3d6b; border-radius: 999px; background: rgba(6, 20, 43, .7); }
+.tab-acceso { flex: 1; min-height: 38px; border: 0; border-radius: 999px; background: transparent; color: #8fa6c4; font: inherit; font-weight: 600; cursor: pointer; }
+.tab-acceso.activo { background: linear-gradient(90deg, #22d3ee, #0a6cf0); color: #fff; box-shadow: 0 0 14px rgba(34, 211, 238, .35); }
+.fila-dos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+#panel-registro form .btn-primario { margin-top: 16px; }
+.acceso-card .ayuda-pie { margin-top: 14px; }
+.acceso-card .enlace-legal { color: #67e8f9; }
+.pie-card { margin-top: 18px; padding-top: 12px; border-top: 1px solid rgba(34, 211, 238, .2); font-size: 11px; color: #8fa6c4; text-align: center; line-height: 1.5; }
+.pie-card-enlaces { margin-bottom: 2px; }

@@ -21,11 +21,11 @@ const rutasKey = () => [...state.selected].sort().join(',');
 
 // ---- Navegación ----
 function showView(id) {
-  const acceso = id === 'view-start' || id === 'view-login';
+  const acceso = ['view-start', 'view-login', 'view-terminos'].includes(id);
   $('acceso').hidden = !acceso;
   $('app').hidden = acceso;
   document.body.classList.toggle('modo-acceso', acceso);
-  ['view-start', 'view-login', ...VISTAS.map(v => 'view-' + v)].forEach(v => { $(v).hidden = v !== id; });
+  ['view-start', 'view-login', 'view-terminos', ...VISTAS.map(v => 'view-' + v)].forEach(v => { $(v).hidden = v !== id; });
 }
 function go(vista) {
   showView('view-' + vista);
@@ -139,19 +139,20 @@ async function prepararCarpetas() {
 }
 
 // ---- Acceso ----
+function setTab(tab) {
+  const login = tab === 'login';
+  $('panel-login').hidden = !login;
+  $('panel-registro').hidden = login;
+  $('tab-login').classList.toggle('activo', login);
+  $('tab-registro').classList.toggle('activo', !login);
+  $('tab-login').setAttribute('aria-selected', String(login));
+  $('tab-registro').setAttribute('aria-selected', String(!login));
+}
+$('tab-login').addEventListener('click', () => setTab('login'));
+$('tab-registro').addEventListener('click', () => setTab('registro'));
 async function showLogin() {
   showView('view-login');
-  const { mode } = await accountMode(state.root);
-  const crear = mode === 'create';
-  $('login-title').textContent = crear ? 'Configuración inicial' : 'Inicio de sesión';
-  $('login-hint').textContent = crear
-    ? 'Primer uso en esta carpeta. Crea la cuenta del Administrador.'
-    : 'Ingresa tu No. de empleado y contraseña.';
-  $('campo-nombre').hidden = !crear;
-  $('campo-confirmar').hidden = !crear;
-  $('user-nombre').required = crear;
-  $('user-pass2').required = crear;
-  $('btn-login').textContent = crear ? 'Crear administrador' : 'Entrar';
+  setTab('login');
 }
 function safeLog(action, detail) {
   if (!state.root || !state.user) return Promise.resolve();
@@ -160,15 +161,21 @@ function safeLog(action, detail) {
 $('login-form').addEventListener('submit', async e => {
   e.preventDefault();
   try {
-    const { mode } = await accountMode(state.root);
-    const crear = mode === 'create';
-    const name = $('user-name').value, pass = $('user-pass').value;
-    if (crear && pass !== $('user-pass2').value) throw new Error('Las contraseñas no coinciden.');
-    const u = crear
-      ? await createUser(state.root, name, pass, $('user-nombre').value, 'admin')
-      : await login(state.root, name, pass);
+    const u = await login(state.root, $('user-name').value, $('user-pass').value);
+    // Términos: se piden una vez por versión. Sin aceptar no se entra.
+    const aceptado = await terminosDe(state.root, u.name);
+    if (!aceptado || aceptado.version !== LEGAL_VERSION) {
+      const ok = await pedirAceptacion();
+      if (!ok) {
+        $('user-pass').value = '';
+        await showLogin();
+        return setStatus($('login-status'), 'Para usar la aplicación debes aceptar los términos y el aviso de privacidad.', 'err');
+      }
+      await aceptarTerminos(state.root, u.name, LEGAL_VERSION);
+      await logAction(state.root, u.name, 'terminos_aceptados', { version: LEGAL_VERSION });
+    }
     state.user = u.name; state.nombre = u.nombre; state.rol = u.rol;
-    $('user-pass').value = ''; $('user-pass2').value = '';
+    $('user-pass').value = '';
     state.config = { ...DEFAULTS, ...(await readJson(state.root, 'configuracion.json', {})) };
     state.selected = new Set(state.config.routers || []);
     state.catalogo = new Set([...ROUTERS_BASE, ...(state.config.catalogo || [])]);
@@ -176,14 +183,53 @@ $('login-form').addEventListener('submit', async e => {
     await cargarBase(true);
     $('hdr-usuario').textContent = state.nombre;
     $('hdr-carpeta').textContent = `Carpeta: ${state.root.name}`;
-    $('estado-usuario').textContent = `Usuario: ${state.nombre}`;
-    await safeLog(crear ? 'usuario_creado' : 'inicio_sesion');
+    $('estado-usuario').textContent = `Usuario: ${state.nombre} (${state.rol === 'admin' ? 'Administrador' : 'Capturista'})`;
+    await safeLog('inicio_sesion');
     go('inicio');
   } catch (err) {
     setStatus($('login-status'), err.message, 'err');
     await showLogin();
   }
 });
+$('register-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const st = $('login-status');
+  try {
+    if ($('reg-pass').value !== $('reg-pass2').value) throw new Error('Las contraseñas no coinciden.');
+    if (!$('reg-acepto').checked) throw new Error('Debes aceptar el aviso legal y los términos de uso para registrarte.');
+    const u = await createUser(state.root, $('reg-empleado').value, $('reg-pass').value, $('reg-nombre').value, 'capturista', 'pendiente');
+    await aceptarTerminos(state.root, u.name, LEGAL_VERSION);
+    await logAction(state.root, u.name, 'registro_solicitado', { version: LEGAL_VERSION });
+    $('register-form').reset();
+    setTab('login');
+    $('user-name').value = u.name;
+    setStatus(st, `Solicitud enviada. Tu cuenta (${u.name}) queda pendiente de aprobación por un administrador.`, 'ok');
+  } catch (err) {
+    setStatus(st, err.message, 'err');
+  }
+});
+// Pantalla de aceptación: resuelve true si acepta, false si cancela.
+function pedirAceptacion() {
+  showView('view-terminos');
+  renderLegal($('terminos-contenido'));
+  $('acepto-terminos').checked = false;
+  $('btn-acepto').disabled = true;
+  return new Promise(resolve => {
+    $('acepto-terminos').onchange = () => { $('btn-acepto').disabled = !$('acepto-terminos').checked; };
+    $('btn-acepto').onclick = () => resolve(true);
+    $('btn-no-acepto').onclick = () => resolve(false);
+  });
+}
+// Aviso de Términos y privacidad (desde la pantalla de acceso o desde Configuración).
+function abrirLegal() {
+  renderLegal($('legal-contenido'));
+  $('dlg-legal').showModal();
+}
+document.querySelectorAll('[data-legal]').forEach(b => b.addEventListener('click', abrirLegal));
+$('btn-ver-legal').addEventListener('click', abrirLegal);
+$('btn-cerrar-legal').addEventListener('click', () => $('dlg-legal').close());
+$('dlg-legal').addEventListener('click', e => { if (e.target === $('dlg-legal')) $('dlg-legal').close(); });
+
 function resetSesion() {
   state.user = null; state.nombre = null; state.rol = null;
   state.selected = new Set(); state.routerCounts = new Map(); state.cruceRouters = null;
@@ -775,18 +821,28 @@ $('btn-fmt-guardar').addEventListener('click', async () => {
   } catch (e) { setStatus(st, 'Error: ' + e.message, 'err'); }
 });
 async function renderConfig() {
+  $('admin-usuarios').hidden = state.rol !== 'admin';
   renderRouters();
   pintarFormato();
   $('cfg-root').textContent = state.root ? state.root.name : '—';
   $('cfg-txt').textContent = state.txtDir ? state.txtDir.name : 'No elegida';
   $('cfg-resp').textContent = state.respaldoDir ? state.respaldoDir.name : '—';
   $('cfg-imp').textContent = state.impDir ? state.impDir.name : '—';
-  $('usr-sesion').textContent = `Sesión: ${state.nombre} · ${state.rol === 'admin' ? 'Administrador' : 'Operador'}.`;
-  $('admin-usuarios').hidden = state.rol !== 'admin';
+  $('usr-sesion').textContent = `Sesión: ${state.nombre} · ${state.rol === 'admin' ? 'Administrador' : 'Capturista'}.`;
+  document.querySelectorAll('[data-solo-admin]').forEach(el => { el.hidden = state.rol !== 'admin'; });
+  $('legal-version').textContent = LEGAL_VERSION;
+  const acep = state.user ? await terminosDe(state.root, state.user).catch(() => null) : null;
+  $('legal-acepto').textContent = acep
+    ? `Tu aceptación de estos términos: ${new Date(acep.fecha).toLocaleString('es-MX')}`
+    : 'Tu aceptación de estos términos aún no está registrada.';
   if (state.ultimoRespaldo) setStatus($('resp-status'), `Último respaldo: ${state.ultimoRespaldo}`, 'ok');
   const usuarios = await listUsers(state.root).catch(() => []);
   $('usuarios-rows').innerHTML = usuarios.map(u =>
-    `<tr><td>${esc(u.name)}</td><td>${esc(u.nombre)}</td><td>${u.rol === 'admin' ? 'Administrador' : 'Operador'}</td></tr>`).join('');
+    `<tr><td>${esc(u.name)}</td><td>${esc(u.nombre)}</td><td>${u.rol === 'admin' ? 'Administrador' : 'Capturista'}</td><td>${u.estado === 'pendiente' ? 'Pendiente' : 'Activo'}</td></tr>`).join('');
+  const pendientes = usuarios.filter(u => u.estado === 'pendiente');
+  $('pendientes-bloque').hidden = pendientes.length === 0;
+  $('pendientes-rows').innerHTML = pendientes.map(u =>
+    `<tr><td>${esc(u.name)}</td><td>${esc(u.nombre)}</td><td><select data-pend="${esc(u.name)}"><option value="capturista">Capturista</option><option value="admin">Administrador</option></select></td><td><button class="secondary" data-aprobar="${esc(u.name)}">Aprobar</button></td></tr>`).join('');
 }
 $('cfg-change-root').addEventListener('click', async () => {
   const dir = await elegirCarpeta('root', 'readwrite');
@@ -828,6 +884,20 @@ $('btn-respaldar').addEventListener('click', async () => {
 function soloAdmin() {
   if (state.rol !== 'admin') throw new Error('Solo el administrador puede hacer esto.');
 }
+$('pendientes-rows').addEventListener('click', async e => {
+  const b = e.target.closest('[data-aprobar]');
+  if (!b) return;
+  const nombreU = b.dataset.aprobar;
+  const sel = $('pendientes-rows').querySelector(`select[data-pend="${CSS.escape(nombreU)}"]`);
+  try {
+    soloAdmin();
+    const r = await aprobarUsuario(state.root, nombreU, sel.value);
+    await safeLog('usuario_aprobado', { usuario: r.name, rol: r.rol });
+    await respaldoAuto();
+    setStatus($('pend-status'), `${r.name} aprobado como ${r.rol === 'admin' ? 'Administrador' : 'Capturista'}.`, 'ok');
+    renderConfig();
+  } catch (err) { setStatus($('pend-status'), err.message, 'err'); }
+});
 $('btn-alta').addEventListener('click', async () => {
   const st = $('usr-status');
   try {
@@ -836,7 +906,7 @@ $('btn-alta').addEventListener('click', async () => {
     $('alta-empleado').value = ''; $('alta-nombre').value = ''; $('alta-pass').value = '';
     await safeLog('usuario_alta', { usuario: u.name, rol: u.rol });
     await respaldoAuto();
-    setStatus(st, `Usuario ${u.name} dado de alta (${u.rol === 'admin' ? 'Administrador' : 'Operador'}).`, 'ok');
+    setStatus(st, `Usuario ${u.name} dado de alta (${u.rol === 'admin' ? 'Administrador' : 'Capturista'}).`, 'ok');
     renderConfig();
   } catch (e) { setStatus(st, e.message, 'err'); }
 });

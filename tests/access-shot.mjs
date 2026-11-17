@@ -1,0 +1,26 @@
+// Captura la pantalla de acceso (primer uso y entrar) para revisar el diseño.
+import { createRequire } from 'node:module';
+import path from 'node:path';
+import fs from 'node:fs';
+const require = createRequire(import.meta.url);
+const { chromium } = require('playwright');
+const root = path.resolve(new URL('..', import.meta.url).pathname);
+const fakeFs = fs.readFileSync(path.join(root, 'tests', 'fake-fs.js'), 'utf8');
+const out = process.argv[2];
+const browser = await chromium.launch();
+const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+const errors = [];
+page.on('pageerror', e => errors.push(e.message));
+await page.addInitScript(fakeFs);
+await page.goto('file://' + path.join(root, 'index.html'));
+await page.waitForTimeout(300);
+await page.screenshot({ path: path.join(out, 'acceso-inicio.png') });
+await page.click('#btn-pick-root2');
+await page.waitForSelector('#view-login:not([hidden])');
+await page.fill('#user-name', 'ADMIN');
+await page.fill('#user-pass', 'admin2026');
+await page.screenshot({ path: path.join(out, 'acceso-primer-uso.png') });
+await page.click('#btn-login'); await page.waitForTimeout(300);
+await page.screenshot({ path: path.join(out, 'acceso-menu.png') });
+console.log({ errors });
+await browser.close();

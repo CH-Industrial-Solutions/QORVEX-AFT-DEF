@@ -1,5 +1,6 @@
 import fs from 'node:fs';
-import { scanTxt, normalizeJob, parseLine } from '../js/txt-source.js';
+import { scanTxt, parseLine } from '../js/txt-source.js';
+import { normalizeJob } from '../js/core.js';
 const SRC = '/mnt/user-data/uploads/Planned_Trans_011.txt';
 console.log(parseLine('4065598C2@1@Z36@083521'), normalizeJob('2-520202'), normalizeJob('083521'));
 const t0 = Date.now();
